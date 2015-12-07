@@ -17,7 +17,7 @@ import android.view.View;
 
 
 /**
- * Created by 郭攀峰 on 2015/8/19.
+ * Created by asdzheng 
  */
 public class RadarScanView extends View {
     private static final int DEFAULT_WIDTH = 80;
