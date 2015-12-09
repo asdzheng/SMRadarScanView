@@ -11,6 +11,8 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.SweepGradient;
 import android.graphics.Typeface;
 import android.os.Handler;
@@ -28,7 +30,7 @@ public class RadarScanView extends View {
 
     private int defaultWidth;
     private int defaultHeight;
-    private int startScanDegree = 270;
+    private int startScanDegree = 0;
     private int startClearDegree = 270;
     private int centerX;
     private int centerY;
@@ -61,7 +63,7 @@ public class RadarScanView extends View {
     private Matrix scanMatrix;
 
 
-    private Matrix clearMatrix;
+//    private Matrix clearMatrix;
     private Paint mPaintClear;
     private boolean isLayer = true;
     private boolean startClear = false;
@@ -76,6 +78,8 @@ public class RadarScanView extends View {
     private int[] colors;
     private float[] positions;
     private Handler handler = new Handler();
+
+    private RectF clearRect;
 
 
     private boolean startScan = false;
@@ -97,14 +101,14 @@ public class RadarScanView extends View {
     private Runnable clearRun = new Runnable() {
         @Override
         public void run() {
-            clearMatrix = new Matrix();
-            startClearDegree -= 2;
-            clearMatrix.postRotate(startClearDegree, centerX, centerY);
+//            clearMatrix = new Matrix();
+            startClearDegree += 2;
+//            clearMatrix.postRotate(startClearDegree, centerX, centerY);
 
             postInvalidate();
 //            if(startClearDegree > -90) {
             if(startClear) {
-                handler.postDelayed(clearRun, 10);
+                handler.postDelayed(clearRun, 50);
             }
 //            }
         }
@@ -164,7 +168,7 @@ public class RadarScanView extends View {
 //                Color.parseColor("#64FFFFFF"), Color.parseColor("#FFFFFFFF")}, new float[]{0, 0.7f, 1.0f});
 
         scanMatrix = new Matrix();
-        clearMatrix = new Matrix();
+//        clearMatrix = new Matrix();
 //        handler.post(run);
 
         radarRadius = Math.min(defaultWidth, defaultHeight);
@@ -217,10 +221,14 @@ public class RadarScanView extends View {
         mPaintWhiteLayer.setStyle(Paint.Style.FILL);//设置为实心
 
         mPaintClear = new Paint();
-//        mPaintClear.setAlpha(0);
-        mPaintClear.setColor(Color.BLACK);
-//        mPaintClear.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_IN));
-        mPaintClear.setStrokeWidth(3);
+        mPaintClear.setAlpha(0);
+        mPaintClear.setColor(Color.BLACK); // 此处不能为透明色
+
+//        mPaintClear.setColor(Color.BLUE);
+        mPaintClear.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
+//        mPaintClear.setStrokeWidth(3);
+        mPaintClear.setStyle(Paint.Style.FILL);
+
 //        mPaintClear.setAlpha(0);
 //        mPaintClear.setAlpha(0);
         mPaintClear.setAntiAlias(true);
@@ -232,6 +240,7 @@ public class RadarScanView extends View {
         mPaintText.setFakeBoldText(false);
         mPaintText.setTypeface(Typeface.SANS_SERIF);
 
+        clearRect = new RectF();
 
     }
 
@@ -311,8 +320,15 @@ public class RadarScanView extends View {
         if(startClear) {
             Log.i("Radar ", startClearDegree + "");
 
-            layerCanvas.concat(clearMatrix);
-            layerCanvas.drawLine(centerX, centerY, centerX + radarRadius, centerY, mPaintClear);
+            clearRect.bottom = centerY+ radarRadius;
+            clearRect.top = centerY -radarRadius;
+            clearRect.left = centerX -radarRadius;
+            clearRect.right = centerX + radarRadius;
+
+//            layerCanvas.concat(clearMatrix);
+//            layerCanvas.drawLine(centerX, centerY, centerX + radarRadius, centerY, mPaintClear);
+//            clearRect.intersect(centerX - radarRadius, centerY - radarRadius, centerX+radarRadius, c);
+            layerCanvas.drawArc(clearRect, 0, startClearDegree, true, mPaintClear);
         }
 
 
@@ -320,7 +336,7 @@ public class RadarScanView extends View {
             canvas.drawText(i+"", centerX, centerY - ((mPaintText.descent() + mPaintText.ascent()) / 2), mPaintText);
 
             //设置颜色渐变从透明到不透明
-            //        Shader shader = new SweepGradient(centerX, centerY, Color.TRANSPARENT, tailColor);
+            // Shader shader = new SweepGradient(centerX, centerY, Color.TRANSPARENT, tailColor);
 
             SweepGradient shader = new SweepGradient(centerX, centerY, colors, positions);
             mPaintRadar.setShader(shader);
