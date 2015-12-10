@@ -11,7 +11,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
 import android.graphics.RectF;
 import android.graphics.SweepGradient;
 import android.graphics.Typeface;
@@ -312,6 +311,7 @@ public class RadarScanView extends View {
     public void startScan() {
         startScan = true;
         handler.post(run);
+
     }
 
     public void stopScan() {
