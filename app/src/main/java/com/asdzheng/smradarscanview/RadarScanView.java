@@ -59,15 +59,11 @@ public class RadarScanView extends View {
     private Matrix scanMatrix;
 
     private Paint mPaintClear;
-    private boolean isLayer = true;
-    private boolean startClear = false;
+
+    private boolean isPutWhiteLayer = false;
     private Canvas layerCanvas;
 
     private Bitmap layerBitmap;
-
-    public void changeLayer() {
-        isLayer = !isLayer;
-    }
 
     private int[] colors;
     private float[] positions;
@@ -75,19 +71,27 @@ public class RadarScanView extends View {
 
     private RectF clearRect;
 
-    private boolean startScan = false;
+    private boolean isClearing = false;
+    private boolean isScanning = false;
+
+    private float textY;
+
+    private String text = "0M";
+    private boolean isShowText = true;
+
+
+    //默认清除时间为3.6s
+    private int clearTime = 3600;
 
     private Runnable run = new Runnable() {
         @Override
         public void run() {
-
             scanMatrix.reset();
-
             startScanDegree += 2;
             scanMatrix.postRotate(startScanDegree, centerX, centerY);
 
             postInvalidate();
-            if(startScan) {
+            if (isScanning) {
                 handler.postDelayed(run, 10);
             }
 
@@ -97,12 +101,12 @@ public class RadarScanView extends View {
     private Runnable clearRun = new Runnable() {
         @Override
         public void run() {
-            if(startClear && startClearDegree > -360) {
-                startClearDegree -= 2;
+            if (isClearing && startClearDegree > -360) {
+                startClearDegree -= 1;
                 postInvalidate();
-                handler.postDelayed(clearRun, 20);
+                handler.postDelayed(clearRun, clearTime / 360);
             } else {
-                startClear = false;
+                isClearing = false;
             }
         }
     };
@@ -134,6 +138,9 @@ public class RadarScanView extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         centerX = w / 2;
         centerY = h / 2;
+
+        //drawText高度会有一些偏差，这样的设置会让文字居中显示
+        textY = centerY - ((mPaintText.descent() + mPaintText.ascent()) / 2);
     }
 
     private void init(AttributeSet attrs, Context context) {
@@ -157,6 +164,17 @@ public class RadarScanView extends View {
 
         scanMatrix = new Matrix();
         radarRadius = Math.min(defaultWidth, defaultHeight);
+
+        clearRect = new RectF();
+        clearRect.bottom = 2 * radarRadius;
+        clearRect.top = 0;
+        clearRect.left = 0;
+        clearRect.right = 2 * radarRadius;
+
+        //多一层白色蒙层
+        layerBitmap = Bitmap.createBitmap(2 * defaultWidth, 2 * defaultHeight, Bitmap.Config.ARGB_8888);
+        layerCanvas = new Canvas(layerBitmap);
+        layerCanvas.drawColor(Color.parseColor("#30FAFAFA"));
     }
 
     private void initPaint() {
@@ -202,18 +220,11 @@ public class RadarScanView extends View {
         mPaintClear.setAntiAlias(true);
 
         mPaintText = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaintText.setTextSize(dip2px(getContext(), 20));
+        mPaintText.setTextSize(dip2px(getContext(), 15));
         mPaintText.setColor(Color.parseColor("#FFFFFF"));
         mPaintText.setTextAlign(Paint.Align.CENTER);
         mPaintText.setFakeBoldText(false);
         mPaintText.setTypeface(Typeface.SANS_SERIF);
-
-        clearRect = new RectF();
-
-        layerBitmap = Bitmap.createBitmap(2 * defaultWidth, 2 * defaultHeight, Bitmap.Config.ARGB_8888);
-        layerCanvas = new Canvas(layerBitmap);
-        layerCanvas.drawColor(Color.parseColor("#30FAFAFA"));
-
     }
 
     @Override
@@ -246,12 +257,9 @@ public class RadarScanView extends View {
         setMeasuredDimension(resultWidth, resultHeight);
     }
 
-    int i = 0;
-
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        i++;
 
         canvas.drawCircle(centerX, centerY, radarRadius + dip2px(getContext(), 10), mPaintFillOutSize);
         canvas.drawCircle(centerX, centerY, radarRadius + dip2px(getContext(), 10), mPaintStrokeOutSize);
@@ -269,25 +277,20 @@ public class RadarScanView extends View {
         canvas.drawLine(centerX - radarRadius, centerY, centerX + radarRadius, centerY, mPaintStroke);
         canvas.drawLine(centerX, centerY - radarRadius, centerX, centerY + radarRadius, mPaintStroke);
 
-        if(isLayer) {
+        if (isPutWhiteLayer) {
               canvas.drawBitmap(layerBitmap, centerX - radarRadius, centerY - radarRadius, null);
         }
 
-        if(startClear) {
+        if (isClearing) {
             Log.i("Radar ", startClearDegree + "");
-
-            clearRect.bottom = 2 * radarRadius;
-            clearRect.top = 0;
-            clearRect.left = 0;
-            clearRect.right = 2 * radarRadius;
-
             layerCanvas.drawArc(clearRect, 270, startClearDegree, true, mPaintClear);
         }
 
+        if (isShowText) {
+            canvas.drawText(text, centerX, textY, mPaintText);
+        }
 
-        if(startScan && !startClear) {
-            canvas.drawText(i+"", centerX, centerY - ((mPaintText.descent() + mPaintText.ascent()) / 2), mPaintText);
-
+        if (isScanning && !isClearing) {
             //设置颜色渐变从透明到不透明
             SweepGradient shader = new SweepGradient(centerX, centerY, colors, positions);
             mPaintRadar.setShader(shader);
@@ -295,6 +298,7 @@ public class RadarScanView extends View {
             canvas.drawLine(centerX, centerY, centerX + radarRadius, centerY, mPaintRadarLine);
             canvas.drawCircle(centerX, centerY,  radarRadius, mPaintRadar);
         }
+
         canvas.restore();
     }
 
@@ -309,21 +313,47 @@ public class RadarScanView extends View {
     }
 
     public void startScan() {
-        startScan = true;
+        isScanning = true;
         handler.post(run);
-
     }
 
     public void stopScan() {
-        startScan = false;
+        isScanning = false;
     }
 
     public void startClear() {
-        startClear = true;
-        handler.post(clearRun);
+        if (isPutWhiteLayer && startClearDegree > -360) {
+            isClearing = true;
+            handler.post(clearRun);
+        }
     }
 
     public void stopClear() {
-        startClear = false;
+        isClearing = false;
+    }
+
+    public boolean isPutWhiteLayer() {
+        return isPutWhiteLayer;
+    }
+
+    public void setWhiteLayer(boolean putWhiteLayer) {
+        isPutWhiteLayer = putWhiteLayer;
+        postInvalidate();
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public int getClearTime() {
+        return clearTime;
+    }
+
+    public void setClearTime(int clearTime) {
+        this.clearTime = clearTime;
     }
 }
