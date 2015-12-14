@@ -19,9 +19,12 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 
 /**
- * Created by asdzheng 
+ * Created by asdzheng
  */
 public class RadarScanView extends View {
     private static final int DEFAULT_WIDTH = 80;
@@ -36,7 +39,7 @@ public class RadarScanView extends View {
     private int radarRadius;
 
     private int circleColor = Color.parseColor("#7197ED");
-    private int innerCircleColor =Color.parseColor("#678EE6");
+    private int innerCircleColor = Color.parseColor("#678EE6");
 
 
     private int radarColor = Color.parseColor("#99a2a2a2");
@@ -76,9 +79,11 @@ public class RadarScanView extends View {
 
     private float textY;
 
-    private String text = "0M";
     private boolean isShowText = true;
 
+    private double collectionNum;
+    private double pieceOfNum;
+    private String unit = "M";
 
     //默认清除时间为3.6s
     private int clearTime = 3600;
@@ -103,6 +108,11 @@ public class RadarScanView extends View {
         public void run() {
             if (isClearing && startClearDegree > -360) {
                 startClearDegree -= 1;
+                if (collectionNum > 0) {
+                    collectionNum = collectionNum - pieceOfNum;
+                } else {
+                    return;
+                }
                 postInvalidate();
                 handler.postDelayed(clearRun, clearTime / 360);
             } else {
@@ -158,8 +168,8 @@ public class RadarScanView extends View {
 
         initPaint();
         //得到当前屏幕的像素宽高
-        colors = new int[]{ Color.parseColor("#00FAFAFA"),
-                 Color.parseColor("#59FAFAFA")};
+        colors = new int[]{Color.parseColor("#00FAFAFA"),
+                Color.parseColor("#59FAFAFA")};
         positions = new float[]{0, 1.0f};
 
         scanMatrix = new Matrix();
@@ -264,7 +274,7 @@ public class RadarScanView extends View {
         canvas.drawCircle(centerX, centerY, radarRadius + dip2px(getContext(), 10), mPaintFillOutSize);
         canvas.drawCircle(centerX, centerY, radarRadius + dip2px(getContext(), 10), mPaintStrokeOutSize);
 
-        canvas.drawCircle(centerX, centerY,  radarRadius, mPaintCircle);
+        canvas.drawCircle(centerX, centerY, radarRadius, mPaintCircle);
 
         //分别绘制四个圆
         canvas.drawCircle(centerX, centerY, 3 * radarRadius / 5, mPaintInnerCircle);
@@ -278,7 +288,7 @@ public class RadarScanView extends View {
         canvas.drawLine(centerX, centerY - radarRadius, centerX, centerY + radarRadius, mPaintStroke);
 
         if (isPutWhiteLayer) {
-              canvas.drawBitmap(layerBitmap, centerX - radarRadius, centerY - radarRadius, null);
+            canvas.drawBitmap(layerBitmap, centerX - radarRadius, centerY - radarRadius, null);
         }
 
         if (isClearing) {
@@ -287,7 +297,7 @@ public class RadarScanView extends View {
         }
 
         if (isShowText) {
-            canvas.drawText(text, centerX, textY, mPaintText);
+            canvas.drawText(getShowNum(), centerX, textY, mPaintText);
         }
 
         if (isScanning && !isClearing) {
@@ -296,10 +306,25 @@ public class RadarScanView extends View {
             mPaintRadar.setShader(shader);
             canvas.concat(scanMatrix);
             canvas.drawLine(centerX, centerY, centerX + radarRadius, centerY, mPaintRadarLine);
-            canvas.drawCircle(centerX, centerY,  radarRadius, mPaintRadar);
+            canvas.drawCircle(centerX, centerY, radarRadius, mPaintRadar);
         }
 
         canvas.restore();
+    }
+
+    private String getShowNum() {
+        String num;
+        if (collectionNum > 0 && collectionNum < 100) {
+            BigDecimal bd = new BigDecimal(collectionNum);
+            bd = bd.setScale(1, RoundingMode.HALF_UP);
+            num = bd.toString() + unit;
+        } else if (collectionNum > 100) {
+            num = ((int) collectionNum) + unit;
+        } else {
+            num = ((int) collectionNum) + unit;
+        }
+
+        return num;
     }
 
     private int dip2px(Context context, float dipValue) {
@@ -323,6 +348,7 @@ public class RadarScanView extends View {
 
     public void startClear() {
         if (isPutWhiteLayer && startClearDegree > -360) {
+            pieceOfNum = collectionNum / 360;
             isClearing = true;
             handler.post(clearRun);
         }
@@ -341,14 +367,6 @@ public class RadarScanView extends View {
         postInvalidate();
     }
 
-    public String getText() {
-        return text;
-    }
-
-    public void setText(String text) {
-        this.text = text;
-    }
-
     public int getClearTime() {
         return clearTime;
     }
@@ -356,4 +374,22 @@ public class RadarScanView extends View {
     public void setClearTime(int clearTime) {
         this.clearTime = clearTime;
     }
+
+    public double getCollectionNum() {
+        return collectionNum;
+    }
+
+    public void setCollectionNum(double collectionNum) {
+        this.collectionNum = collectionNum;
+    }
+
+    public String getUnit() {
+        return unit;
+    }
+
+    public void setUnit(String unit) {
+        this.unit = unit;
+    }
+
+
 }

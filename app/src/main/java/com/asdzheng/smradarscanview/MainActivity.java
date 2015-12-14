@@ -20,7 +20,8 @@ public class MainActivity extends AppCompatActivity {
     Runnable textRun = new Runnable() {
         @Override
         public void run() {
-            radar.setText(num + "M");
+            radar.setCollectionNum(num);
+            radar.setUnit("M");
             num++;
             handler.postDelayed(textRun, 10);
         }
@@ -30,12 +31,10 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
         handler = new Handler();
 
         radar = (RadarScanView) findViewById(R.id.radar);
-        radar.setText("0M");
-        radar.setClearTime(7200);
+        radar.setClearTime(360);
 
         findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -43,18 +42,12 @@ public class MainActivity extends AppCompatActivity {
                 i++;
               if(i % 2 == 0) {
                   radar.stopScan();
+                  radar.setWhiteLayer(true);
                   handler.removeCallbacksAndMessages(null);
               } else {
                   radar.startScan();
                   handler.post(textRun);
               }
-            }
-        });
-
-        findViewById(R.id.btn_layer).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                radar.setWhiteLayer(!radar.isPutWhiteLayer());
             }
         });
 
