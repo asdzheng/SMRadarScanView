@@ -38,17 +38,22 @@ public class RadarScanView extends View {
     private int centerY;
     private int radarRadius;
 
+    //OutSiseCicleColor
     private int circleColor = Color.parseColor("#7197ED");
     private int innerCircleColor = Color.parseColor("#678EE6");
+    private int layerColor = Color.parseColor("#30FAFAFA");
 
+    private int innerTextColor = Color.parseColor("#FFFFFF");
+    private int innerTextSize = dip2px(getContext(), 15);
 
-    private int radarColor = Color.parseColor("#99a2a2a2");
-    private int tailColor = Color.parseColor("#50aaaaaa");
+    private int shaderColor1 = Color.parseColor("#00FAFAFA");
+    private int shaderColor2 = Color.parseColor("#59FAFAFA");
+    private int radarLineColor = Color.WHITE;
+
+    private int borderWidth = dip2px(getContext(), 10);
 
     private Paint mPaintCircle;
-
     private Paint mPaintInnerCircle;
-
     private Paint mPaintStroke;
 
     private Paint mPaintFillOutSize;
@@ -68,8 +73,6 @@ public class RadarScanView extends View {
 
     private Bitmap layerBitmap;
 
-    private int[] colors;
-    private float[] positions;
     private Handler handler = new Handler();
 
     private RectF clearRect;
@@ -146,11 +149,25 @@ public class RadarScanView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+
+        Log.i("Radar", w + "");
+
         centerX = w / 2;
         centerY = h / 2;
-
         //drawText高度会有一些偏差，这样的设置会让文字居中显示
         textY = centerY - ((mPaintText.descent() + mPaintText.ascent()) / 2);
+
+        radarRadius = Math.min(centerX, centerY) - 2 * borderWidth;
+        //多一层白色蒙层
+        layerBitmap = Bitmap.createBitmap(2 * radarRadius, 2 * radarRadius, Bitmap.Config.ARGB_8888);
+        layerCanvas = new Canvas(layerBitmap);
+        layerCanvas.drawColor(layerColor);
+
+        clearRect = new RectF();
+        clearRect.bottom = 2 * radarRadius;
+        clearRect.top = 0;
+        clearRect.left = 0;
+        clearRect.right = 2 * radarRadius;
     }
 
     private void init(AttributeSet attrs, Context context) {
@@ -158,8 +175,18 @@ public class RadarScanView extends View {
             TypedArray ta = context.obtainStyledAttributes(attrs,
                     R.styleable.RadarScanView);
             circleColor = ta.getColor(R.styleable.RadarScanView_circleColor, circleColor);
-            radarColor = ta.getColor(R.styleable.RadarScanView_radarColor, radarColor);
-            tailColor = ta.getColor(R.styleable.RadarScanView_tailColor, tailColor);
+            innerCircleColor = ta.getColor(R.styleable.RadarScanView_innerCircleColor, innerCircleColor);
+            layerColor = ta.getColor(R.styleable.RadarScanView_layerColor, layerColor);
+
+            innerTextColor = ta.getColor(R.styleable.RadarScanView_innerTextColor, innerTextColor);
+            innerTextSize = ta.getInteger(R.styleable.RadarScanView_innerTextSize, innerTextSize);
+
+            shaderColor1 = ta.getColor(R.styleable.RadarScanView_radarShaderColor1, shaderColor1);
+            shaderColor2 = ta.getColor(R.styleable.RadarScanView_radarShaderColor2, shaderColor2);
+            radarLineColor = ta.getColor(R.styleable.RadarScanView_radarLineColor, radarLineColor);
+
+            borderWidth = ta.getInteger(R.styleable.RadarScanView_borderWidth, borderWidth);
+
             ta.recycle();
         }
 
@@ -167,24 +194,11 @@ public class RadarScanView extends View {
         defaultHeight = dip2px(context, DEFAULT_HEIGHT);
 
         initPaint();
-        //得到当前屏幕的像素宽高
-        colors = new int[]{Color.parseColor("#00FAFAFA"),
-                Color.parseColor("#59FAFAFA")};
-        positions = new float[]{0, 1.0f};
+//        colors = new int[]{Color.parseColor("#00FAFAFA"),
+//                Color.parseColor("#59FAFAFA")};
+        //positions = new float[]{0, 1.0f};
 
         scanMatrix = new Matrix();
-        radarRadius = Math.min(defaultWidth, defaultHeight);
-
-        clearRect = new RectF();
-        clearRect.bottom = 2 * radarRadius;
-        clearRect.top = 0;
-        clearRect.left = 0;
-        clearRect.right = 2 * radarRadius;
-
-        //多一层白色蒙层
-        layerBitmap = Bitmap.createBitmap(2 * defaultWidth, 2 * defaultHeight, Bitmap.Config.ARGB_8888);
-        layerCanvas = new Canvas(layerBitmap);
-        layerCanvas.drawColor(Color.parseColor("#30FAFAFA"));
     }
 
     private void initPaint() {
@@ -202,10 +216,11 @@ public class RadarScanView extends View {
         mPaintRadar.setAntiAlias(true);
 
         mPaintRadarLine = new Paint();
-        mPaintRadarLine.setColor(Color.parseColor("#FFFFFF"));
+        mPaintRadarLine.setColor(radarLineColor);
         mPaintRadarLine.setStrokeWidth(3);
         mPaintRadarLine.setAntiAlias(true);
 
+        //whiteStokeCicle
         mPaintStroke = new Paint();
         mPaintStroke.setColor(Color.parseColor("#AEC4F4"));
         mPaintStroke.setAntiAlias(true);//抗锯齿
@@ -222,6 +237,7 @@ public class RadarScanView extends View {
         mPaintStrokeOutSize.setStyle(Paint.Style.STROKE);//设置为空心
         mPaintStrokeOutSize.setStrokeWidth(2);
 
+        //ClearPaint
         mPaintClear = new Paint();
         mPaintClear.setAlpha(0);
         mPaintClear.setColor(Color.BLACK); // 此处不能为透明色
@@ -229,9 +245,10 @@ public class RadarScanView extends View {
         mPaintClear.setStyle(Paint.Style.FILL);
         mPaintClear.setAntiAlias(true);
 
+        //TextColor
         mPaintText = new Paint(Paint.ANTI_ALIAS_FLAG);
-        mPaintText.setTextSize(dip2px(getContext(), 15));
-        mPaintText.setColor(Color.parseColor("#FFFFFF"));
+        mPaintText.setTextSize(innerTextSize);
+        mPaintText.setColor(innerTextColor);
         mPaintText.setTextAlign(Paint.Align.CENTER);
         mPaintText.setFakeBoldText(false);
         mPaintText.setTypeface(Typeface.SANS_SERIF);
@@ -271,8 +288,8 @@ public class RadarScanView extends View {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        canvas.drawCircle(centerX, centerY, radarRadius + dip2px(getContext(), 10), mPaintFillOutSize);
-        canvas.drawCircle(centerX, centerY, radarRadius + dip2px(getContext(), 10), mPaintStrokeOutSize);
+        canvas.drawCircle(centerX, centerY, radarRadius + borderWidth, mPaintFillOutSize);
+        canvas.drawCircle(centerX, centerY, radarRadius + borderWidth, mPaintStrokeOutSize);
 
         canvas.drawCircle(centerX, centerY, radarRadius, mPaintCircle);
 
@@ -302,7 +319,8 @@ public class RadarScanView extends View {
 
         if (isScanning && !isClearing) {
             //设置颜色渐变从透明到不透明
-            SweepGradient shader = new SweepGradient(centerX, centerY, colors, positions);
+            SweepGradient shader = new SweepGradient(centerX, centerY, shaderColor1,
+                    shaderColor2);
             mPaintRadar.setShader(shader);
             canvas.concat(scanMatrix);
             canvas.drawLine(centerX, centerY, centerX + radarRadius, centerY, mPaintRadarLine);
@@ -391,5 +409,56 @@ public class RadarScanView extends View {
         this.unit = unit;
     }
 
+    public void setShaderColor(int color1, int color2) {
+        shaderColor1 = color1;
+        shaderColor2 = color2;
+    }
 
+    public int getInnerTextColor() {
+        return innerTextColor;
+    }
+
+    public void setInnerTextColor(int innerTextColor) {
+        this.innerTextColor = innerTextColor;
+    }
+
+    public int getInnerTextSize() {
+        return innerTextSize;
+    }
+
+    public void setInnerTextSize(int innerTextSize) {
+        this.innerTextSize = innerTextSize;
+    }
+
+    public int getLayerColor() {
+        return layerColor;
+    }
+
+    public void setLayerColor(int layerColor) {
+        this.layerColor = layerColor;
+    }
+
+    public int getInnerCircleColor() {
+        return innerCircleColor;
+    }
+
+    public void setInnerCircleColor(int innerCircleColor) {
+        this.innerCircleColor = innerCircleColor;
+    }
+
+    public int getCircleColor() {
+        return circleColor;
+    }
+
+    public void setCircleColor(int circleColor) {
+        this.circleColor = circleColor;
+    }
+
+    public int getRadarLineColor() {
+        return radarLineColor;
+    }
+
+    public void setRadarLineColor(int radarLineColor) {
+        this.radarLineColor = radarLineColor;
+    }
 }

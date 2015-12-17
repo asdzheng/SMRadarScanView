@@ -2,7 +2,15 @@
 <resources>
     <declare-styleable name="RadarScanView">
         <attr name="circleColor" format="color"/>
-        <attr name="radarColor" format="color"/>
-        <attr name="tailColor" format="color"/>
+        <attr name="innerCircleColor" format="color" />
+        <attr name="layerColor" format="color" />
+        <attr name="innerTextColor" format="color" />
+        <attr name="innerTextSize" format="integer" />
+
+        <attr name="radarShaderColor1" format="color" />
+        <attr name="radarShaderColor2" format="color" />
+        <attr name="radarLineColor" format="color" />
+
+        <attr name="borderWidth" format="integer" />
     </declare-styleable>
 </resources>
