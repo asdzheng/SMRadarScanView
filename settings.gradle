@@ -1,1 +1,1 @@
-include ':app', ':smartison.radarview'
+include ':app', ':smradarview'
