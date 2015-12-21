@@ -5,6 +5,8 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
+import asdzheng.smartisonradarview.RadarScanView;
+
 public class MainActivity extends AppCompatActivity {
 
     private RadarScanView radar;
@@ -34,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
         handler = new Handler();
 
         radar = (RadarScanView) findViewById(R.id.radar);
-        radar.setClearTime(360);
+        radar.setClearTime(3600);
 
         findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
             @Override

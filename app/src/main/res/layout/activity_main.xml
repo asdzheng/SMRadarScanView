@@ -11,8 +11,7 @@
     tools:context="com.asdzheng.smradarscanview.MainActivity">
 
 
-
-    <com.asdzheng.smradarscanview.RadarScanView
+    <asdzheng.smartisonradarview.RadarScanView
         android:id="@+id/radar"
         android:layout_height="200dp"
         android:layout_width="200dp"

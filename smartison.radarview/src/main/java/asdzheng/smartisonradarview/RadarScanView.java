@@ -1,4 +1,4 @@
-package com.asdzheng.smradarscanview;
+package asdzheng.smartisonradarview;
 
 
 import android.annotation.TargetApi;
