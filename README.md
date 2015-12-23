@@ -33,4 +33,6 @@
     radar.stopClear();
 
 
+部分代码参考自 [RadarSacnView](https://github.com/gpfduoduo/RadarScanView)
+
 ## License Apache 2.0
