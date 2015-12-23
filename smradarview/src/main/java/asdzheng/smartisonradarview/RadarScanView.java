@@ -88,7 +88,7 @@ public class RadarScanView extends View {
     private double pieceOfNum;
     private String unit = "M";
 
-    //默认清除时间为3.6s
+    //默认清除时间3.6s
     private int clearTime = 3600;
 
     private Runnable run = new Runnable() {
@@ -154,11 +154,11 @@ public class RadarScanView extends View {
 
         centerX = w / 2;
         centerY = h / 2;
-        //drawText高度会有一些偏差，这样的设置会让文字居中显示
+        //drawText高度会有偏差，这样的设置会让文字居中显示
         textY = centerY - ((mPaintText.descent() + mPaintText.ascent()) / 2);
 
         radarRadius = Math.min(centerX, centerY) - 2 * borderWidth;
-        //多一层白色蒙层
+
         layerBitmap = Bitmap.createBitmap(2 * radarRadius, 2 * radarRadius, Bitmap.Config.ARGB_8888);
         layerCanvas = new Canvas(layerBitmap);
         layerCanvas.drawColor(layerColor);
@@ -204,12 +204,12 @@ public class RadarScanView extends View {
     private void initPaint() {
         mPaintCircle = new Paint();
         mPaintCircle.setColor(circleColor);
-        mPaintCircle.setAntiAlias(true);//抗锯齿
+        mPaintCircle.setAntiAlias(true);
         mPaintCircle.setStyle(Paint.Style.FILL);//设置实心
 
         mPaintInnerCircle = new Paint();
         mPaintInnerCircle.setColor(innerCircleColor);
-        mPaintCircle.setAntiAlias(true);//抗锯齿
+        mPaintCircle.setAntiAlias(true);
         mPaintCircle.setStyle(Paint.Style.FILL);//设置实心
 
         mPaintRadar = new Paint();
@@ -223,24 +223,24 @@ public class RadarScanView extends View {
         //whiteStokeCicle
         mPaintStroke = new Paint();
         mPaintStroke.setColor(Color.parseColor("#AEC4F4"));
-        mPaintStroke.setAntiAlias(true);//抗锯齿
-        mPaintStroke.setStyle(Paint.Style.STROKE);//设置为空心
+        mPaintStroke.setAntiAlias(true);
+        mPaintStroke.setStyle(Paint.Style.STROKE);
 
         mPaintFillOutSize = new Paint();
         mPaintFillOutSize.setColor(Color.parseColor("#FEFAFA"));
-        mPaintFillOutSize.setAntiAlias(true);//抗锯齿
-        mPaintFillOutSize.setStyle(Paint.Style.FILL);//设置为空心
+        mPaintFillOutSize.setAntiAlias(true);
+        mPaintFillOutSize.setStyle(Paint.Style.FILL);
 
         mPaintStrokeOutSize = new Paint();
         mPaintStrokeOutSize.setColor(Color.parseColor("#C8CCD7"));
-        mPaintStrokeOutSize.setAntiAlias(true);//抗锯齿
-        mPaintStrokeOutSize.setStyle(Paint.Style.STROKE);//设置为空心
+        mPaintStrokeOutSize.setAntiAlias(true);
+        mPaintStrokeOutSize.setStyle(Paint.Style.STROKE);
         mPaintStrokeOutSize.setStrokeWidth(2);
 
         //ClearPaint
         mPaintClear = new Paint();
         mPaintClear.setAlpha(0);
-        mPaintClear.setColor(Color.BLACK); // 此处不能为透明色
+        mPaintClear.setColor(Color.BLACK);
         mPaintClear.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.DST_OUT));
         mPaintClear.setStyle(Paint.Style.FILL);
         mPaintClear.setAntiAlias(true);
@@ -293,7 +293,6 @@ public class RadarScanView extends View {
 
         canvas.drawCircle(centerX, centerY, radarRadius, mPaintCircle);
 
-        //分别绘制四个圆
         canvas.drawCircle(centerX, centerY, 3 * radarRadius / 5, mPaintInnerCircle);
 
         canvas.drawCircle(centerX, centerY, radarRadius / 5, mPaintStroke);
@@ -318,7 +317,6 @@ public class RadarScanView extends View {
         }
 
         if (isScanning && !isClearing) {
-            //设置颜色渐变从透明到不透明
             SweepGradient shader = new SweepGradient(centerX, centerY, shaderColor1,
                     shaderColor2);
             mPaintRadar.setShader(shader);
@@ -461,4 +459,13 @@ public class RadarScanView extends View {
     public void setRadarLineColor(int radarLineColor) {
         this.radarLineColor = radarLineColor;
     }
+
+    public boolean isShowText() {
+        return isShowText;
+    }
+
+    public void setShowText(boolean showText) {
+        isShowText = showText;
+    }
+
 }
