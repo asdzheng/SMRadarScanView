@@ -1,16 +1,16 @@
 # SMRadarScanView
 
-###仿锤子系统的垃圾扫描的自定义View
+### 仿锤子系统的垃圾扫描的自定义View
 
-##扫描效果图
+## 扫描效果图
 
 ![scan](https://github.com/asdzheng/SMRadarScanView/blob/master/gif/scan.gif)
 
-##清除垃圾效果图
+## 清除垃圾效果图
 
 ![clear](https://github.com/asdzheng/SMRadarScanView/blob/master/gif/clear.gif)
 
-##各种属性设置
+## 各种属性设置
 
     <attr name="circleColor" format="color"/> // 外环颜色
     <attr name="innerCircleColor" format="color" /> // 内环圆的颜色
